@@ -1,0 +1,47 @@
+{
+  "version": 3,
+  "name": "fullstack-demo-krakend",
+  "port": 8080,
+  "endpoints": [
+    { "endpoint": "/api/v1/auth/register", "method": "POST", "output_encoding": "json", "extra_config": { "github_com/devopsfaith/krakend/proxy": { "preserve_query": true } }, "backend": [ { "host": ["http://auth-service:8081"], "url_pattern": "/api/v1/auth/register" } ] },
+    { "endpoint": "/api/v1/auth/login", "method": "POST", "output_encoding": "json", "extra_config": { "github_com/devopsfaith/krakend/proxy": { "preserve_query": true } }, "backend": [ { "host": ["http://auth-service:8081"], "url_pattern": "/api/v1/auth/login" } ] },
+    { "endpoint": "/api/v1/auth/refresh", "method": "POST", "output_encoding": "json", "extra_config": { "github_com/devopsfaith/krakend/proxy": { "preserve_query": true } }, "backend": [ { "host": ["http://auth-service:8081"], "url_pattern": "/api/v1/auth/refresh" } ] },
+    { "endpoint": "/api/v1/auth/logout", "method": "POST", "output_encoding": "json", "extra_config": { "github_com/devopsfaith/krakend/proxy": { "preserve_query": true } }, "backend": [ { "host": ["http://auth-service:8081"], "url_pattern": "/api/v1/auth/logout" } ] },
+    { "endpoint": "/api/v1/auth/profile", "method": "GET",  "output_encoding": "json", "extra_config": { "github_com/devopsfaith/krakend/proxy": { "preserve_query": true } }, "backend": [ { "host": ["http://auth-service:8081"], "url_pattern": "/api/v1/auth/profile" } ] },
+    { "endpoint": "/api/v1/auth/profile", "method": "PUT",  "output_encoding": "json", "extra_config": { "github_com/devopsfaith/krakend/proxy": { "preserve_query": true } }, "backend": [ { "host": ["http://auth-service:8081"], "url_pattern": "/api/v1/auth/profile" } ] },
+    { "endpoint": "/api/v1/auth/change-password", "method": "POST",  "output_encoding": "json", "extra_config": { "github_com/devopsfaith/krakend/proxy": { "preserve_query": true } }, "backend": [ { "host": ["http://auth-service:8081"], "url_pattern": "/api/v1/auth/change-password" } ] },
+    { "endpoint": "/api/v1/auth/users/{user_id}/roles", "method": "POST",  "output_encoding": "json", "extra_config": { "github_com/devopsfaith/krakend/proxy": { "preserve_query": true } }, "backend": [ { "host": ["http://auth-service:8081"], "url_pattern": "/api/v1/auth/users/{user_id}/roles" } ] },
+    { "endpoint": "/api/v1/auth/users/{user_id}/roles", "method": "DELETE",  "output_encoding": "json", "extra_config": { "github_com/devopsfaith/krakend/proxy": { "preserve_query": true } }, "backend": [ { "host": ["http://auth-service:8081"], "url_pattern": "/api/v1/auth/users/{user_id}/roles" } ] },
+
+    { "endpoint": "/api/v1/products", "method": "GET", "output_encoding": "json", "extra_config": { "github_com/devopsfaith/krakend/proxy": { "preserve_query": true } }, "backend": [ { "host": ["http://product-service:8082"], "url_pattern": "/api/v1/products" } ] },
+    { "endpoint": "/api/v1/products", "method": "POST", "output_encoding": "json", "extra_config": { "github_com/devopsfaith/krakend/proxy": { "preserve_query": true } }, "backend": [ { "host": ["http://product-service:8082"], "url_pattern": "/api/v1/products" } ] },
+    { "endpoint": "/api/v1/products/{id}", "method": "GET", "output_encoding": "json", "extra_config": { "github_com/devopsfaith/krakend/proxy": { "preserve_query": true } }, "backend": [ { "host": ["http://product-service:8082"], "url_pattern": "/api/v1/products/{id}" } ] },
+    { "endpoint": "/api/v1/products/sku/{sku}", "method": "GET", "output_encoding": "json", "extra_config": { "github_com/devopsfaith/krakend/proxy": { "preserve_query": true } }, "backend": [ { "host": ["http://product-service:8082"], "url_pattern": "/api/v1/products/sku/{sku}" } ] },
+    { "endpoint": "/api/v1/products/{id}", "method": "PUT", "output_encoding": "json", "extra_config": { "github_com/devopsfaith/krakend/proxy": { "preserve_query": true } }, "backend": [ { "host": ["http://product-service:8082"], "url_pattern": "/api/v1/products/{id}" } ] },
+    { "endpoint": "/api/v1/products/{id}", "method": "DELETE", "output_encoding": "json", "extra_config": { "github_com/devopsfaith/krakend/proxy": { "preserve_query": true } }, "backend": [ { "host": ["http://product-service:8082"], "url_pattern": "/api/v1/products/{id}" } ] },
+    { "endpoint": "/api/v1/products/{id}/stock", "method": "PATCH", "output_encoding": "json", "extra_config": { "github_com/devopsfaith/krakend/proxy": { "preserve_query": true } }, "backend": [ { "host": ["http://product-service:8082"], "url_pattern": "/api/v1/products/{id}/stock" } ] },
+
+    { "endpoint": "/api/v1/cart/{user_id}", "method": "GET", "output_encoding": "json", "extra_config": { "github_com/devopsfaith/krakend/proxy": { "preserve_query": true } }, "backend": [ { "host": ["http://cart-service:8083"], "url_pattern": "/api/v1/cart/{user_id}" } ] },
+    { "endpoint": "/api/v1/cart/{user_id}", "method": "DELETE", "output_encoding": "json", "extra_config": { "github_com/devopsfaith/krakend/proxy": { "preserve_query": true } }, "backend": [ { "host": ["http://cart-service:8083"], "url_pattern": "/api/v1/cart/{user_id}" } ] },
+    { "endpoint": "/api/v1/cart/{user_id}/items", "method": "POST", "output_encoding": "json", "extra_config": { "github_com/devopsfaith/krakend/proxy": { "preserve_query": true } }, "backend": [ { "host": ["http://cart-service:8083"], "url_pattern": "/api/v1/cart/{user_id}/items" } ] },
+    { "endpoint": "/api/v1/cart/{user_id}/items/{sku}", "method": "DELETE", "output_encoding": "json", "extra_config": { "github_com/devopsfaith/krakend/proxy": { "preserve_query": true } }, "backend": [ { "host": ["http://cart-service:8083"], "url_pattern": "/api/v1/cart/{user_id}/items/{sku}" } ] },
+
+    { "endpoint": "/api/v1/orders", "method": "POST", "output_encoding": "json", "extra_config": { "github_com/devopsfaith/krakend/proxy": { "preserve_query": true } }, "backend": [ { "host": ["http://order-service:8084"], "url_pattern": "/api/v1/orders" } ] },
+    { "endpoint": "/api/v1/orders", "method": "GET", "output_encoding": "json", "extra_config": { "github_com/devopsfaith/krakend/proxy": { "preserve_query": true } }, "backend": [ { "host": ["http://order-service:8084"], "url_pattern": "/api/v1/orders" } ] },
+    { "endpoint": "/api/v1/orders/{id}", "method": "GET", "output_encoding": "json", "extra_config": { "github_com/devopsfaith/krakend/proxy": { "preserve_query": true } }, "backend": [ { "host": ["http://order-service:8084"], "url_pattern": "/api/v1/orders/{id}" } ] },
+    { "endpoint": "/api/v1/orders/{id}/status", "method": "PATCH", "output_encoding": "json", "extra_config": { "github_com/devopsfaith/krakend/proxy": { "preserve_query": true } }, "backend": [ { "host": ["http://order-service:8084"], "url_pattern": "/api/v1/orders/{id}/status" } ] },
+
+    { "endpoint": "/api/v1/payments/intent", "method": "POST", "output_encoding": "json", "extra_config": { "github_com/devopsfaith/krakend/proxy": { "preserve_query": true } }, "backend": [ { "host": ["http://payment-service:8085"], "url_pattern": "/api/v1/payments/intent" } ] },
+
+    { "endpoint": "/api/v1/notifications", "method": "GET", "output_encoding": "json", "extra_config": { "github_com/devopsfaith/krakend/proxy": { "preserve_query": true } }, "backend": [ { "host": ["http://notification-service:8087"], "url_pattern": "/api/v1/notifications" } ] }
+  ],
+  "extra_config": {
+    "github_com/devopsfaith/krakend/transport/http/client": {
+      "headers_to_pass": ["Authorization"]
+    },
+    "github_com/devopsfaith/krakend/transport/http/server/handler": {
+      "request_header_blacklist": [],
+      "response_header_blacklist": []
+    }
+  }
+}

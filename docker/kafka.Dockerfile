@@ -1,0 +1,17 @@
+FROM confluentinc/cp-kafka:latest
+
+# Set environment variables
+ENV KAFKA_BROKER_ID=1
+ENV KAFKA_ZOOKEEPER_CONNECT=zookeeper:2181
+ENV KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092
+ENV KAFKA_LISTENER_SECURITY_PROTOCOL_MAP=PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+ENV KAFKA_INTER_BROKER_LISTENER_NAME=PLAINTEXT
+ENV KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1
+ENV KAFKA_AUTO_CREATE_TOPICS_ENABLE=true
+
+# Add health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+  CMD kafka-broker-api-versions --bootstrap-server localhost:9092 || exit 1
+
+# Expose port
+EXPOSE 9092

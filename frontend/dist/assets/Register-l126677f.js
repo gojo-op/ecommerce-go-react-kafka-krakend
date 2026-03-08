@@ -1,0 +1,2 @@
+import{j as e}from"./index-Dw16h8L7.js";const s=()=>e.jsx("div",{className:"min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8",children:e.jsx("div",{className:"max-w-md w-full space-y-8",children:e.jsxs("div",{className:"text-center",children:[e.jsx("h2",{className:"text-3xl font-bold text-gray-900 mb-2",children:"Create your account"}),e.jsx("p",{className:"text-gray-600",children:"Registration functionality will be implemented here"})]})})});export{s as default};
+//# sourceMappingURL=Register-l126677f.js.map

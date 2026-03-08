@@ -1,0 +1,318 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  # SQLite: per-service embedded DBs, remove Postgres
+
+  # Redis Cache
+  # Remove Redis (cart uses SQLite)
+
+  # Zookeeper (for Kafka)
+  zookeeper:
+    build:
+      context: ./docker
+      dockerfile: zookeeper.Dockerfile
+    container_name: demo-zookeeper
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    volumes:
+      - zookeeper_data:/var/lib/zookeeper/data
+      - zookeeper_logs:/var/lib/zookeeper/log
+    networks:
+      - demo-network
+    # healthcheck removed to avoid blocking dependent services in local dev
+
+  # Kafka
+  kafka:
+    build:
+      context: ./docker
+      dockerfile: kafka.Dockerfile
+    container_name: demo-kafka
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_PROCESS_ROLES: broker
+    volumes:
+      - kafka_data:/var/lib/kafka/data
+    networks:
+      - demo-network
+    depends_on:
+      - zookeeper
+
+
+  order-service:
+    build:
+      context: .
+      dockerfile: microservices/order-service/Dockerfile
+    container_name: demo-order-service
+    ports:
+      - "8084:8084"
+    volumes:
+      - order_data:/data
+    environment:
+      SERVICE_NAME: order-service
+      SERVICE_PORT: 8084
+      ENVIRONMENT: development
+      DB_SQLITE_PATH: /data/order.db
+      KAFKA_BROKERS: kafka:9092
+    networks:
+      - demo-network
+    depends_on:
+      - kafka
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8084/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+
+  # Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: demo-frontend
+    ports:
+      - "3000:8080"
+    environment:
+      VITE_API_URL: /api/v1
+      VITE_CHAT_URL: /ws
+    networks:
+      - demo-network
+    # Frontend can start independently of backend health
+    restart: unless-stopped
+
+  # Kafka Consumer Service (for processing events)
+
+  product-service:
+    build:
+      context: .
+      dockerfile: microservices/product-service/Dockerfile
+    container_name: demo-product-service
+    ports:
+      - "8082:8082"
+    volumes:
+      - product_data:/data
+    environment:
+      SERVICE_NAME: product-service
+      SERVICE_PORT: 8082
+      ENVIRONMENT: development
+      DB_SQLITE_PATH: /data/product.db
+      KAFKA_BROKERS: kafka:9092
+    networks:
+      - demo-network
+    depends_on:
+      - kafka
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8082/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+
+  cart-service:
+    build:
+      context: .
+      dockerfile: microservices/cart-service/Dockerfile
+    container_name: demo-cart-service
+    ports:
+      - "8083:8083"
+    volumes:
+      - cart_data:/data
+    environment:
+      SERVICE_NAME: cart-service
+      SERVICE_PORT: 8083
+      ENVIRONMENT: development
+      DB_SQLITE_PATH: /data/cart.db
+      KAFKA_BROKERS: kafka:9092
+    networks:
+      - demo-network
+    depends_on:
+      - kafka
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8083/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+
+  auth-service:
+    build:
+      context: .
+      dockerfile: microservices/auth-service/Dockerfile
+    container_name: demo-auth-service
+    ports:
+      - "8081:8081"
+    volumes:
+      - auth_data:/data
+    environment:
+      SERVICE_NAME: auth-service
+      SERVICE_PORT: 8081
+      ENVIRONMENT: development
+      DB_SQLITE_PATH: /data/auth.db
+      JWT_SECRET: your-super-secret-jwt-key-change-this-in-production-minimum-32-characters
+      JWT_ACCESS_EXPIRY: 15m
+      JWT_REFRESH_EXPIRY: 168h
+      KAFKA_BROKERS: kafka:9092
+      KAFKA_TOPIC_USER_REGISTERED: user.registered
+      KAFKA_TOPIC_USER_UPDATED: user.updated
+      KAFKA_TOPIC_USER_DELETED: user.deleted
+      KAFKA_TOPIC_ROLE_ASSIGNED: role.assigned
+      KAFKA_TOPIC_ROLE_REVOKED: role.revoked
+    networks:
+      - demo-network
+    depends_on:
+      - kafka
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8081/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+
+  krakend:
+    image: devopsfaith/krakend:2
+    container_name: demo-krakend
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./krakend/krakend.json:/etc/krakend/krakend.json:ro
+    networks:
+      - demo-network
+    depends_on:
+      - auth-service
+      - product-service
+      - cart-service
+      - order-service
+      - payment-service
+      - notification-service
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8080/__health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+
+  notification-service:
+    build:
+      context: .
+      dockerfile: microservices/notification-service/Dockerfile
+    container_name: demo-notification-service
+    ports:
+      - "8087:8087"
+    environment:
+      SERVICE_NAME: notification-service
+      SERVICE_PORT: 8087
+      ENVIRONMENT: development
+      KAFKA_BROKERS: kafka:9092
+      DB_SQLITE_PATH: /data/notification.db
+    networks:
+      - demo-network
+    depends_on:
+      - kafka
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8087/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+
+  payment-service:
+    build:
+      context: .
+      dockerfile: microservices/payment-service/Dockerfile
+    container_name: demo-payment-service
+    ports:
+      - "8085:8085"
+    environment:
+      SERVICE_NAME: payment-service
+      SERVICE_PORT: 8085
+      ENVIRONMENT: development
+      KAFKA_BROKERS: kafka:9092
+      DB_SQLITE_PATH: /data/payment.db
+      STRIPE_PUBLISHABLE_KEY: ""
+      STRIPE_SECRET_KEY: ""
+      STRIPE_WEBHOOK_SECRET: ""
+      RAZORPAY_KEY_ID: ""
+      RAZORPAY_KEY_SECRET: ""
+      RAZORPAY_WEBHOOK_SECRET: ""
+    networks:
+      - demo-network
+    depends_on:
+      - kafka
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8085/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+
+  chat-service:
+    build:
+      context: .
+      dockerfile: microservices/chat-service/Dockerfile
+    container_name: demo-chat-service
+    ports:
+      - "8086:8086"
+    environment:
+      SERVICE_NAME: chat-service
+      SERVICE_PORT: 8086
+      ENVIRONMENT: development
+      KAFKA_BROKERS: kafka:9092
+      DB_SQLITE_PATH: /data/chat.db
+    networks:
+      - demo-network
+    depends_on:
+      - kafka
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8086/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+volumes:
+  auth_data:
+    driver: local
+  product_data:
+    driver: local
+  order_data:
+    driver: local
+  cart_data:
+    driver: local
+  zookeeper_data:
+    driver: local
+  zookeeper_logs:
+    driver: local
+  kafka_data:
+    driver: local
+  notification_data:
+    driver: local
+  payment_data:
+    driver: local
+  chat_data:
+    driver: local
+
+networks:
+  demo-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
